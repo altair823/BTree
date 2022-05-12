@@ -9,6 +9,13 @@
 #include "node/node.h"
 
 template <typename Value>
+struct SubRoot{
+  DataShared<Value> data;
+  Pointer<Value> l_child;
+  Pointer<Value> r_child;
+};
+
+template <typename Value>
 class BTree{
  public:
   BTree(size_t degree);
@@ -23,6 +30,8 @@ class BTree{
  private:
   size_t degree; // number of pointers.
   Pointer<Value> head;
+
+  Result<SubRoot<Value>> split(Pointer<Value> node);
 };
 
 #include "b_tree.tpp"
