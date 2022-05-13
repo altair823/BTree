@@ -3,7 +3,7 @@
 
 template<typename Value>
 Node<Value>::Node(size_t degree)
-  : parent(nullptr), max_pointer_count(degree), max_data_count(degree - 1), is_node_leaf(LEAF) {
+  : parent(nullptr), max_pointer_count(degree), max_data_count(degree - 1), is_node_leaf(LEAF), depth(1) {
   node_num = node_count;
   node_count++;
   pointers.push_back(nullptr);
@@ -70,14 +70,6 @@ Result<bool> Node<Value>::push_back_pointer(Pointer<Value> pointer) {
     return Ok(true);
   }
 }
-template<typename Value>
-void Node<Value>::make_leaf() {
-  is_node_leaf = LEAF;
-}
-template<typename Value>
-void Node<Value>::make_no_leaf() {
-  is_node_leaf = NO_LEAF;
-}
 
 template<typename Value>
 Result<long> Node<Value>::search(DataShared<Value> new_data) {
@@ -97,19 +89,11 @@ Result<bool> Node<Value>::set_data(int index, std::shared_ptr<Data<Value>> new_d
 }
 template<typename Value>
 Result<bool> Node<Value>::set_pointer(int index, Pointer<Value> pointer) {
-  if (pointers.size() <= index){
-    return Err(false, "Pointer vector index out of bound error!");
-  } else{
     pointers[index] = pointer;
     if (pointer != nullptr){
       pointer->set_parent(this);
     }
     return Ok(true);
-  }
-}
-template<typename Value>
-int Node<Value>::get_pointer_count() {
-  return pointers.size();
 }
 template<typename Value>
 Pointer<Value> Node<Value>::make_node(size_t degree) {
@@ -120,9 +104,18 @@ void Node<Value>::clear() {
   data.clear();
   pointers.clear();
   pointers.push_back(nullptr);
+  is_node_leaf = NO_LEAF;
 }
 template<typename Value>
 void Node<Value>::set_parent(Node<Value>* new_parent) {
   this->parent = new_parent;
+}
+template<typename Value>
+void Node<Value>::set_depth(int d) {
+  depth = d;
+}
+template<typename Value>
+int Node<Value>::get_depth() {
+  return depth;
 }
 

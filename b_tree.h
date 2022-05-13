@@ -29,9 +29,9 @@ class BTree{
 
  private:
   size_t degree; // number of pointers.
-  Pointer<Value> head;
+  Node<Value>* head;
 
-  Result<SubRoot<Value>> split(Pointer<Value> node);
+  Result<SubRoot<Value>> split(Node<Value>* node);
 };
 
 #include "b_tree.tpp"

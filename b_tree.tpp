@@ -11,16 +11,16 @@ Result<bool> BTree<Value>::insert(DataShared<Value> data) {
 
   // If head is null.
   if (head == nullptr){
-    head = Node<Value>::make_node(degree);
+    head = new Node<Value>(degree);
     head->push_back_data(data);
   }
 
   // Else, find the leaf node where the new data will insert.
   else{
-    Pointer<Value> current_node = head;
+    Node<Value>* current_node = head;
     while (!current_node->is_leaf()){
       auto index = current_node->search(data).unwrap();
-      current_node = current_node->get_pointer(index).unwrap();
+      current_node = current_node->get_pointer(index).unwrap().get();
     }
     auto index = current_node->search(data).unwrap();
     current_node->insert_data(index, data).unwrap();
@@ -28,36 +28,43 @@ Result<bool> BTree<Value>::insert(DataShared<Value> data) {
     if (current_node->get_pointer_count() <= degree){
       return Ok(true);
     } else {
-      auto cur = current_node.get();
       do {
         auto sub_root = split(current_node).unwrap();
         current_node->clear();
         current_node->push_back_data(sub_root.data).unwrap();
         current_node->set_pointer(0, sub_root.l_child);
         current_node->set_pointer(1, sub_root.r_child);
-        current_node->make_no_leaf();
-        if (current_node->get_parent() != nullptr){
-          //merge with parent.
-          auto parent = cur->get_parent();
-          auto p_index = parent->search(cur->get_data(0).unwrap()).unwrap();
-          parent->insert_data(p_index, cur->get_data(0).unwrap()).unwrap();
-          parent->set_pointer(p_index, cur->get_pointer(0).unwrap()).unwrap();
-          parent->set_pointer(p_index + 1, cur->get_pointer(1).unwrap()).unwrap();
+        current_node->set_leaf(NO_LEAF);
+        if (current_node != head){
+          auto parent = current_node->get_parent();
+          auto p_index = parent->search(current_node->get_data(0).unwrap()).unwrap();
+          parent->insert_data(p_index, current_node->get_data(0).unwrap()).unwrap();
+          parent->set_pointer(p_index, current_node->get_pointer(0).unwrap()).unwrap();
+          parent->set_pointer(p_index + 1, current_node->get_pointer(1).unwrap()).unwrap();
 
-          cur = cur->get_parent();
+          current_node = current_node->get_parent();
+        } else {
+          head = current_node;
+          break;
         }
-      } while (cur->get_parent() != nullptr);
+      } while (current_node->get_pointer_count() > degree);
     }
   }
 
   return Ok(true);
 }
 template<typename Value>
-Result<SubRoot<Value>> BTree<Value>::split(Pointer<Value> node) {
+Result<SubRoot<Value>> BTree<Value>::split(Node<Value>* node) {
+  bool is_leaf = node->is_leaf();
+  int depth = node->get_depth();
   int index = node->get_pointer_count() / 2 - 1;
   DataShared<Value> e = node->get_data(index).unwrap();
   Pointer<Value> l_child = Node<Value>::make_node(degree);
+  l_child->set_leaf(is_leaf);
+  l_child->set_depth(depth + 1);
   Pointer<Value> r_child = Node<Value>::make_node(degree);
+  r_child->set_leaf(is_leaf);
+  r_child->set_depth(depth + 1);
 
   for (int i = 0; i < index; i++){
     l_child->insert_data(i, node->get_data(i).unwrap()).unwrap();
