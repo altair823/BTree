@@ -3,7 +3,7 @@
 #include "b_tree.h"
 
 template<typename Value>
-BTree<Value>::BTree(size_t degree): head(nullptr), degree(degree) {
+BTree<Value>::BTree(size_t degree): head(nullptr), degree(degree), depth(1) {
 
 }
 template<typename Value>
@@ -19,10 +19,18 @@ Result<bool> BTree<Value>::insert(DataShared<Value> data) {
   else{
     Node<Value>* current_node = head;
     while (!current_node->is_leaf()){
-      auto index = current_node->search(data).unwrap();
-      current_node = current_node->get_pointer(index).unwrap().get();
+      auto index = current_node->search(data->get_key()).unwrap();
+      if (index < current_node->get_data_count() && current_node->get_data(index)->get_key() == data->get_key()) {
+        current_node->set_data(index, data);
+        return Ok(true);
+      }
+      current_node = current_node->get_pointer(index).get();
     }
-    auto index = current_node->search(data).unwrap();
+    auto index = current_node->search(data->get_key()).unwrap();
+    if (index < current_node->get_data_count() && current_node->get_data(index)->get_key() == data->get_key()) {
+      current_node->set_data(index, data);
+      return Ok(true);
+    }
     current_node->insert_data(index, data).unwrap();
 
     if (current_node->get_pointer_count() <= degree){
@@ -37,14 +45,14 @@ Result<bool> BTree<Value>::insert(DataShared<Value> data) {
         current_node->set_leaf(NO_LEAF);
         if (current_node != head){
           auto parent = current_node->get_parent();
-          auto p_index = parent->search(current_node->get_data(0).unwrap()).unwrap();
-          parent->insert_data(p_index, current_node->get_data(0).unwrap()).unwrap();
-          parent->set_pointer(p_index, current_node->get_pointer(0).unwrap()).unwrap();
-          parent->set_pointer(p_index + 1, current_node->get_pointer(1).unwrap()).unwrap();
+          auto p_index = parent->search(current_node->get_data(0)->get_key()).unwrap();
+          parent->insert_data(p_index, current_node->get_data(0)).unwrap();
+          parent->set_pointer(p_index, current_node->get_pointer(0)).unwrap();
+          parent->set_pointer(p_index + 1, current_node->get_pointer(1)).unwrap();
 
           current_node = current_node->get_parent();
         } else {
-          head = current_node;
+          depth++;
           break;
         }
       } while (current_node->get_pointer_count() > degree);
@@ -56,28 +64,25 @@ Result<bool> BTree<Value>::insert(DataShared<Value> data) {
 template<typename Value>
 Result<SubRoot<Value>> BTree<Value>::split(Node<Value>* node) {
   bool is_leaf = node->is_leaf();
-  int depth = node->get_depth();
   int index = node->get_pointer_count() / 2 - 1;
-  DataShared<Value> e = node->get_data(index).unwrap();
+  DataShared<Value> e = node->get_data(index);
   Pointer<Value> l_child = Node<Value>::make_node(degree);
   l_child->set_leaf(is_leaf);
-  l_child->set_depth(depth + 1);
   Pointer<Value> r_child = Node<Value>::make_node(degree);
   r_child->set_leaf(is_leaf);
-  r_child->set_depth(depth + 1);
 
   for (int i = 0; i < index; i++){
-    l_child->insert_data(i, node->get_data(i).unwrap()).unwrap();
+    l_child->insert_data(i, node->get_data(i)).unwrap();
   }
   for (int i = 0; i <= index; i++){
-    l_child->set_pointer(i, node->get_pointer(i).unwrap()).unwrap();
+    l_child->set_pointer(i, node->get_pointer(i)).unwrap();
   }
 
   for (int i = index + 1; i < node->get_pointer_count() - 1; i++){
-    r_child->insert_data(i - index - 1, node->get_data(i).unwrap()).unwrap();
+    r_child->insert_data(i - index - 1, node->get_data(i)).unwrap();
   }
   for (int i = index + 1; i < node->get_pointer_count(); i++){
-    r_child->set_pointer(i - index - 1, node->get_pointer(i).unwrap()).unwrap();
+    r_child->set_pointer(i - index - 1, node->get_pointer(i)).unwrap();
   }
 
 
@@ -86,4 +91,82 @@ Result<SubRoot<Value>> BTree<Value>::split(Node<Value>* node) {
   sub_root.l_child = l_child;
   sub_root.r_child = r_child;
   return Ok(sub_root);
+}
+template<typename Value>
+Result<bool> BTree<Value>::remove(Key key) {
+  if (head == nullptr){
+    return Ok(false);
+  }
+  else{
+    Node<Value>* current_node = head;
+    while (!current_node->is_leaf()){
+      auto index = current_node->search(key).unwrap();
+      if (index < current_node->get_data_count() && current_node->get_data(index)->get_key() == key) {
+        // found the key in branch node.
+        auto deleted_node = remove_in_branch(current_node, index);
+        current_node = deleted_node.node;
+
+        break;
+      }
+      current_node = current_node->get_pointer(index).get();
+    }
+    auto index = current_node->search(key).unwrap();
+    if (index < current_node->get_data_count() && current_node->get_data(index)->get_key() == key) {
+      // found the key in leaf node.
+    }
+    // not found.
+    return Ok(false);
+  }
+}
+template<typename Value>
+DeletedNode<Value> BTree<Value>::remove_in_branch(Node<Value> *node, int index) {
+  auto current_node = node;
+  while (!current_node->is_leaf()) {
+    {
+      auto smaller_node = current_node->get_pointer(index).get();
+      auto biggest_index = smaller_node->get_data_count() - 1;
+      if (smaller_node) {
+        auto to_up = smaller_node->get_data(biggest_index);
+        current_node->set_data(index, to_up);
+        smaller_node->set_data(biggest_index, nullptr);
+        if (!smaller_node->is_leaf()) {
+          return remove_in_branch(smaller_node, biggest_index);
+        } else{
+          return {smaller_node, biggest_index};
+        }
+      }
+    }
+    {
+      auto bigger_node = current_node->get_pointer(index + 1).get();
+      auto smallest_index = 0;
+      if (bigger_node) {
+        auto to_up = bigger_node->get_data(smallest_index);
+        current_node->set_data(index, to_up);
+        bigger_node->set_data(smallest_index, nullptr);
+        if (!bigger_node->is_leaf()) {
+          return remove_in_branch(bigger_node, smallest_index);
+        } else{
+          return {bigger_node, smallest_index};
+        }
+      }
+    }
+  }
+}
+template<typename Value>
+void print_node(Pointer<Value> node, size_t depth) {
+  if (node == nullptr){
+    return;
+  }
+  using namespace std;
+  cout << "Level: " << depth << endl;
+  cout << "key: ";
+  for (int i = 0; i < node->get_data_count(); i++){
+     cout << node->get_data(i)->get_key() << "  ";
+  }
+  cout << endl;
+  cout << endl;
+  depth++;
+  for (int i = 0; i < node->get_pointer_count() && node->is_leaf() == NO_LEAF; i++){
+    print_node(node->get_pointer(i), depth);
+  }
 }

@@ -3,28 +3,26 @@
 
 template<typename Value>
 Node<Value>::Node(size_t degree)
-  : parent(nullptr), max_pointer_count(degree), max_data_count(degree - 1), is_node_leaf(LEAF), depth(1) {
+  : parent(nullptr), max_pointer_count(degree), max_data_count(degree - 1), is_node_leaf(LEAF) {
   node_num = node_count;
   node_count++;
   pointers.push_back(nullptr);
 }
 
 template<typename Value>
-Result<Pointer<Value>> Node<Value>::get_pointer(int index) {
-  if (pointers.size() <= index) {
-    return Err(static_cast<Pointer<Value>>(nullptr), "Pointer index out of bound error!");
-  } else {
-    return Ok(this->pointers[index]);
+Pointer<Value> Node<Value>::get_pointer(int index) {
+  if (pointers.empty() || pointers.size() <= index || index < 0){
+    return nullptr;
   }
+  return this->pointers[index];
 }
 
 template<typename Value>
-Result<DataShared<Value>> Node<Value>::get_data(int index) {
-  if (data.size() <= index) {
-    return Err(static_cast<DataShared<Value>>(nullptr), "Data index out of bound error!");
-  } else {
-    return Ok(this->data[index]);
+DataShared<Value> Node<Value>::get_data(int index) {
+  if (data.empty() || data.size() <= index || index < 0){
+    return nullptr;
   }
+  return this->data[index];
 }
 
 template<typename Value>
@@ -59,34 +57,15 @@ Result<bool> Node<Value>::push_back_data(DataShared<Value> new_data) {
 }
 
 template<typename Value>
-Result<bool> Node<Value>::push_back_pointer(Pointer<Value> pointer) {
-  if (pointers.size() > max_pointer_count) {
-    return Err(false, "The pointer vector is full!");
-  } else {
-    pointers.push_back(pointer);
-    if (pointer != nullptr){
-      pointer->set_parent(this);
-    }
-    return Ok(true);
-  }
-}
-
-template<typename Value>
-Result<long> Node<Value>::search(DataShared<Value> new_data) {
-  auto p = std::lower_bound(data.begin(), data.end(), new_data,
+Result<long> Node<Value>::search(Key key) {
+  auto temp_data = std::make_shared<Data<Value>>(key, 0);
+  auto p = std::lower_bound(data.begin(), data.end(), temp_data,
                             less_data_shared<Value>);
   auto index = std::distance(data.begin(), p);
+  temp_data.reset();
   return Ok(index);
 }
-template<typename Value>
-Result<bool> Node<Value>::set_data(int index, std::shared_ptr<Data<Value>> new_data) {
-  if (data.size() <= index){
-    return Err(false, "Data vector index out of bound error!");
-  } else{
-    data[index] = new_data;
-    return Ok(true);
-  }
-}
+
 template<typename Value>
 Result<bool> Node<Value>::set_pointer(int index, Pointer<Value> pointer) {
     pointers[index] = pointer;
@@ -111,11 +90,6 @@ void Node<Value>::set_parent(Node<Value>* new_parent) {
   this->parent = new_parent;
 }
 template<typename Value>
-void Node<Value>::set_depth(int d) {
-  depth = d;
+void Node<Value>::set_data(int index, DataShared<Value> new_data) {
+  data[index] = new_data;
 }
-template<typename Value>
-int Node<Value>::get_depth() {
-  return depth;
-}
-

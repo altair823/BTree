@@ -28,24 +28,22 @@ class Node {
   Node(size_t degree);
   static Pointer<Value> make_node(size_t degree);
 
-  Result<Pointer<Value>> get_pointer(int index);
-  Result<DataShared<Value>> get_data(int index);
-  int get_pointer_count(){return pointers.size();};
-  int get_data_count(){return data.size();};
-  Result<bool> set_data(int index, DataShared<Value> new_data);
+  Pointer<Value> get_pointer(int index);
+  DataShared<Value> get_data(int index);
+  int get_pointer_count(){return pointers.size();}
+  int get_data_count(){return data.size();}
+  void set_data(int index, DataShared<Value> new_data);
   Result<bool> set_pointer(int index, Pointer<Value> pointer);
   void set_parent(Node<Value>* parent);
   Node<Value>* get_parent(){return parent;};
   Result<bool> insert_data(int index, DataShared<Value> new_data);
   Result<bool> insert_pointer(int index, Pointer<Value> pointer);
   Result<bool> push_back_data(DataShared<Value> new_data);
-  Result<bool> push_back_pointer(Pointer<Value> pointer);
   void clear();
-  Result<long> search(DataShared<Value> new_data);
+  Result<long> search(Key key);
   void set_leaf(bool leaf){is_node_leaf = leaf;}
   bool is_leaf(){return is_node_leaf;};
-  void set_depth(int d);
-  int get_depth();
+
   friend std::ostream &operator<<(std::ostream &os, const Node &node) {
 
     os << "node num: " << node.node_num;
@@ -79,7 +77,6 @@ class Node {
   std::vector<DataShared<Value>> data;
   size_t max_data_count;
   bool is_node_leaf;
-  int depth;
 };
 
 #include "node.tpp"

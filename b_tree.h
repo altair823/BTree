@@ -16,22 +16,33 @@ struct SubRoot{
 };
 
 template <typename Value>
+struct DeletedNode{
+  Node<Value>* node;
+  int null_index;
+};
+
+template <typename Value>
+void print_node(Pointer<Value> node, size_t depth);
+
+template <typename Value>
 class BTree{
  public:
   BTree(size_t degree);
   Result<bool> insert(DataShared<Value> data);
+  Result<bool> remove(Key key);
 
-  friend std::ostream &operator<<(std::ostream &os, const BTree &tree){
-    os << "head: \n";
-    os << *tree.head;
-    return os;
+
+  void print(){
+    print_node(std::make_shared<Node<Value>>(*head), 1);
   }
 
  private:
   size_t degree; // number of pointers.
   Node<Value>* head;
+  size_t depth;
 
   Result<SubRoot<Value>> split(Node<Value>* node);
+  DeletedNode<Value> remove_in_branch(Node<Value> *node, int index);
 };
 
 #include "b_tree.tpp"

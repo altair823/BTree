@@ -3,6 +3,7 @@
 //
 
 #include <gtest/gtest.h>
+#include <random>
 #include "../b_tree.h"
 
 TEST(BTreeTest, InsertTest){
@@ -32,6 +33,7 @@ TEST(BTreeTest, InsertTest){
   auto data23 = std::make_shared<Data<int>>(25, 10);
   auto data24 = std::make_shared<Data<int>>(29, 10);
   auto data25 = std::make_shared<Data<int>>(26, 10);
+  auto data26 = std::make_shared<Data<int>>(26, 21);
   b_tree.insert(data4).unwrap();
   b_tree.insert(data5).unwrap();
   b_tree.insert(data1).unwrap();
@@ -56,7 +58,37 @@ TEST(BTreeTest, InsertTest){
   b_tree.insert(data22).unwrap();
   b_tree.insert(data23).unwrap();
   b_tree.insert(data24).unwrap();
-//  b_tree.insert(data25).unwrap();
+  b_tree.insert(data25).unwrap();
+  b_tree.insert(data26).unwrap();
 
-  std::cout << b_tree;
+  b_tree.print();
+}
+
+TEST(BTreeTest, RandomInsertTest){
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<int> dis(0, 999999);
+  auto b_tree = BTree<int>(20);
+  for (int i = 0; i < 100000; i++) {
+    int k = dis(gen);
+    b_tree.insert(std::make_shared<Data<int>>(k, k));
+  }
+  b_tree.print();
+}
+
+TEST(BTreeTest, DeleteTest){
+  int integers[] = {3, 4, 2, 7, 12, 13, 6, 8, 18, 20, 21, 22, 19, 14, 15, 11, 23, 27, 24, 30, 31, 28, 25, 29, 26};
+  auto data = std::vector<DataShared<int>>();
+  for (auto& i: integers){
+    data.push_back(std::make_shared<Data<int>>(i, i));
+  }
+
+  auto b_tree = BTree<int>(5);
+
+  for (auto& d: data){
+    b_tree.insert(d).unwrap();
+  }
+  b_tree.print();
+
+  b_tree.remove(8);
 }
