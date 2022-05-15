@@ -43,6 +43,9 @@ class BTree{
 
   Result<SubRoot<Value>> split(Node<Value>* node);
   DeletedNode<Value> remove_in_branch(Node<Value> *node, int index);
+  void remove_in_leaf(Node<Value> *node);
+  void spin_clockwise(Node<Value> *parent, int target_node_index);
+  void spin_counterclockwise(Node<Value> *parent, int target_node_index);
 };
 
 #include "b_tree.tpp"

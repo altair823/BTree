@@ -105,7 +105,7 @@ Result<bool> BTree<Value>::remove(Key key) {
         // found the key in branch node.
         auto deleted_node = remove_in_branch(current_node, index);
         current_node = deleted_node.node;
-
+        remove_in_leaf(deleted_node.node);
         break;
       }
       current_node = current_node->get_pointer(index).get();
@@ -113,6 +113,7 @@ Result<bool> BTree<Value>::remove(Key key) {
     auto index = current_node->search(key).unwrap();
     if (index < current_node->get_data_count() && current_node->get_data(index)->get_key() == key) {
       // found the key in leaf node.
+      remove_in_leaf(current_node);
     }
     // not found.
     return Ok(false);
@@ -125,13 +126,15 @@ DeletedNode<Value> BTree<Value>::remove_in_branch(Node<Value> *node, int index) 
     {
       auto smaller_node = current_node->get_pointer(index).get();
       auto biggest_index = smaller_node->get_data_count() - 1;
-      if (smaller_node) {
+      if (smaller_node != nullptr) {
         auto to_up = smaller_node->get_data(biggest_index);
         current_node->set_data(index, to_up);
         smaller_node->set_data(biggest_index, nullptr);
         if (!smaller_node->is_leaf()) {
           return remove_in_branch(smaller_node, biggest_index);
         } else{
+          smaller_node->erase_data(biggest_index);
+          smaller_node->erase_pointer(biggest_index + 1);
           return {smaller_node, biggest_index};
         }
       }
@@ -139,18 +142,51 @@ DeletedNode<Value> BTree<Value>::remove_in_branch(Node<Value> *node, int index) 
     {
       auto bigger_node = current_node->get_pointer(index + 1).get();
       auto smallest_index = 0;
-      if (bigger_node) {
+      if (bigger_node != nullptr) {
         auto to_up = bigger_node->get_data(smallest_index);
         current_node->set_data(index, to_up);
         bigger_node->set_data(smallest_index, nullptr);
         if (!bigger_node->is_leaf()) {
           return remove_in_branch(bigger_node, smallest_index);
         } else{
+          bigger_node->erase_data(smallest_index);
+          bigger_node->erase_pointer(smallest_index);
           return {bigger_node, smallest_index};
         }
       }
     }
   }
+}
+template<typename Value>
+void BTree<Value>::remove_in_leaf(Node<Value> *node) {
+  switch (degree % 2) {
+    case 0:
+      if (node->get_data_count() >= degree / 2 - 1) {
+        return;
+      }
+    case 1:
+      if (node->get_data_count() >= degree / 2){
+        return;
+      }
+  }
+  auto parent = node->get_parent();
+  auto i = parent->search_node(node).unwrap();
+  // if the node is in the very left.
+  if (i == 0){
+
+  }
+}
+template<typename Value>
+void BTree<Value>::spin_clockwise(Node<Value> *parent, int target_node_index) {
+
+}
+template<typename Value>
+void BTree<Value>::spin_counterclockwise(Node<Value> *parent, int target_node_index) {
+  auto p_data = parent->get_data(target_node_index);
+  parent->get_pointer(target_node_index)->push_back_data(p_data).unwrap();
+  auto s_data = parent->get_pointer(target_node_index + 1)->get_data(0);
+  parent->set_data(target_node_index, s_data);
+  parent->get_pointer(target_node_index + 1)->erase_data(0);
 }
 template<typename Value>
 void print_node(Pointer<Value> node, size_t depth) {

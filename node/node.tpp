@@ -93,3 +93,28 @@ template<typename Value>
 void Node<Value>::set_data(int index, DataShared<Value> new_data) {
   data[index] = new_data;
 }
+template<typename Value>
+void Node<Value>::erase_data(int index) {
+  if (index < 0 || index >= data.size()){
+    std::cout<<"index out of bound!";
+    return;
+  }
+  data.erase(data.begin() + index);
+}
+template<typename Value>
+void Node<Value>::erase_pointer(int index) {
+  if (index < 0 || index >= pointers.size()){
+    std::cout<<"index out of bound!";
+    return;
+  }
+  pointers.erase(pointers.begin() + index);
+}
+template<typename Value>
+Result<int> Node<Value>::search_node(Node<Value> *node) {
+  for (int i = 0; i < pointers.size(); i++){
+    if (pointers[i].get() == node){
+      return Ok(i);
+    }
+  }
+  return Err(-1, "Cannot found the node #" + std::to_string(node->get_node_num()));
+}

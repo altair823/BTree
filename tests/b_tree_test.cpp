@@ -90,5 +90,5 @@ TEST(BTreeTest, DeleteTest){
   }
   b_tree.print();
 
-  b_tree.remove(8);
+  b_tree.remove(13);
 }

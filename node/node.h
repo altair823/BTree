@@ -27,6 +27,7 @@ class Node {
  public:
   Node(size_t degree);
   static Pointer<Value> make_node(size_t degree);
+  int get_node_num(){return node_num;}
 
   Pointer<Value> get_pointer(int index);
   DataShared<Value> get_data(int index);
@@ -39,8 +40,11 @@ class Node {
   Result<bool> insert_data(int index, DataShared<Value> new_data);
   Result<bool> insert_pointer(int index, Pointer<Value> pointer);
   Result<bool> push_back_data(DataShared<Value> new_data);
+  void erase_data(int index);
+  void erase_pointer(int index);
   void clear();
   Result<long> search(Key key);
+  Result<int> search_node(Node<Value> *node);
   void set_leaf(bool leaf){is_node_leaf = leaf;}
   bool is_leaf(){return is_node_leaf;};
 
