@@ -38,8 +38,7 @@ class Node {
   void set_parent(Node<Value>* parent);
   Node<Value>* get_parent(){return parent;};
   Result<bool> insert_data(int index, DataShared<Value> new_data);
-  Result<bool> insert_pointer(int index, Pointer<Value> pointer);
-  Result<bool> push_back_data(DataShared<Value> new_data);
+  Result<bool> push_back(DataShared<Value> new_data, Pointer<Value> pointer = nullptr);
   void erase_data(int index);
   void erase_pointer(int index);
   void clear();

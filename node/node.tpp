@@ -33,25 +33,12 @@ Result<bool> Node<Value>::insert_data(int index, DataShared<Value> new_data) {\
 }
 
 template<typename Value>
-Result<bool> Node<Value>::insert_pointer(int index, Pointer<Value> pointer) {
-  if (pointers.size() <= index) {
-    return Err(false, "Pointer vector index out of bound error!");
-  } else {
-    pointers.insert(pointers.begin() + index, pointer);
-    if (pointer != nullptr){
-      pointer->set_parent(this);
-    }
-    return Ok(true);
-  }
-}
-
-template<typename Value>
-Result<bool> Node<Value>::push_back_data(DataShared<Value> new_data) {
+Result<bool> Node<Value>::push_back(DataShared<Value> new_data, Pointer<Value> pointer) {
   if (data.size() == max_data_count) {
     return Err(false, "The data vector is full!");
   } else {
     data.push_back(new_data);
-    pointers.push_back(nullptr);
+    pointers.push_back(pointer);
     return Ok(true);
   }
 }

@@ -88,7 +88,9 @@ TEST(BTreeTest, DeleteTest){
   for (auto& d: data){
     b_tree.insert(d).unwrap();
   }
-  b_tree.print();
 
-  b_tree.remove(13);
+  b_tree.remove(29);
+  b_tree.remove(30);
+
+  b_tree.print();
 }

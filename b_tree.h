@@ -8,6 +8,13 @@
 #include <ostream>
 #include "node/node.h"
 
+enum class DeletionType {
+  ClockwiseSpin,
+  CounterClockwiseSpin,
+  MergeLeft,
+  MergeRight,
+};
+
 template <typename Value>
 struct SubRoot{
   DataShared<Value> data;
@@ -37,15 +44,19 @@ class BTree{
   }
 
  private:
-  size_t degree; // number of pointers.
+  size_t degree; // Maximum number of pointers.
+  size_t min_pointer_count;
   Node<Value>* head;
   size_t depth;
 
   Result<SubRoot<Value>> split(Node<Value>* node);
-  DeletedNode<Value> remove_in_branch(Node<Value> *node, int index);
-  void remove_in_leaf(Node<Value> *node);
+  Result<Node<Value>*> remove_in_branch(Node<Value> *node, int index);
+  void remove_in_leaf(Node<Value> *node, int index = -1);
+  DeletionType HowToSolveLack(Node<Value> *parent, int target_node_index);
   void spin_clockwise(Node<Value> *parent, int target_node_index);
   void spin_counterclockwise(Node<Value> *parent, int target_node_index);
+  void merge_with_right(Node<Value> *parent, int target_node_index);
+  void merge_with_left(Node<Value> *parent, int target_node_index);
 };
 
 #include "b_tree.tpp"
