@@ -76,7 +76,7 @@ TEST(BTreeTest, RandomInsertTest){
   b_tree.print();
 }
 
-TEST(BTreeTest, DeleteTest){
+TEST(BTreeTest, RemoveTest){
   int integers[] = {3, 4, 2, 7, 12, 13, 6, 8, 18, 20, 21, 22, 19, 14, 15, 11, 23, 27, 24, 30, 31, 28, 25, 29, 26};
   auto data = std::vector<DataShared<int>>();
   for (auto& i: integers){
@@ -89,8 +89,27 @@ TEST(BTreeTest, DeleteTest){
     b_tree.insert(d).unwrap();
   }
 
-  b_tree.remove(29);
+  b_tree.remove(31);
   b_tree.remove(30);
+  b_tree.remove(29);
+  b_tree.remove(28);
+  b_tree.remove(27);
+  b_tree.remove(26);
+  b_tree.remove(25);
+  b_tree.remove(24);
+  b_tree.remove(23);
+//  b_tree.remove(22);
+//  b_tree.remove(21);
+//  b_tree.remove(20);
+//  b_tree.remove(19);
+//  b_tree.remove(18);
+//  b_tree.remove(15);
+//  b_tree.remove(14);
+//  b_tree.remove(13);
+  //b_tree.remove(12);
+  //b_tree.remove(11);
+  //b_tree.remove(8);
+  //b_tree.remove(7);
 
   b_tree.print();
 }

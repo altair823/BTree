@@ -3,8 +3,7 @@
 #include "b_tree.h"
 
 template<typename Value>
-BTree<Value>::BTree(size_t degree): head(nullptr), degree(degree), depth(1), min_pointer_count(ceil(degree / 2) - 1) {
-
+BTree<Value>::BTree(size_t degree): head(nullptr), degree(degree), depth(1), min_data_count((size_t)ceil((double)degree / 2) - 1) {
 }
 template<typename Value>
 Result<bool> BTree<Value>::insert(DataShared<Value> data) {
@@ -77,14 +76,12 @@ Result<SubRoot<Value>> BTree<Value>::split(Node<Value>* node) {
   for (int i = 0; i <= index; i++){
     l_child->set_pointer(i, node->get_pointer(i)).unwrap();
   }
-
   for (int i = index + 1; i < node->get_pointer_count() - 1; i++){
     r_child->insert_data(i - index - 1, node->get_data(i)).unwrap();
   }
   for (int i = index + 1; i < node->get_pointer_count(); i++){
     r_child->set_pointer(i - index - 1, node->get_pointer(i)).unwrap();
   }
-
 
   auto sub_root = SubRoot<Value>();
   sub_root.data = e;
@@ -105,7 +102,7 @@ Result<bool> BTree<Value>::remove(Key key) {
         // found the key in branch node.
         auto deleted_node = remove_in_branch(current_node, index).unwrap();
         current_node = deleted_node;
-        remove_in_leaf(current_node);
+        solve(current_node);
         break;
       }
       current_node = current_node->get_pointer(index).get();
@@ -113,7 +110,9 @@ Result<bool> BTree<Value>::remove(Key key) {
     auto index = current_node->search(key).unwrap();
     if (index < current_node->get_data_count() && current_node->get_data(index)->get_key() == key) {
       // found the key in leaf node.
-      remove_in_leaf(current_node, index);
+      current_node->erase_data(index);
+      current_node->erase_pointer(index);
+      solve(current_node);
     }
     // not found.
     return Ok(false);
@@ -159,26 +158,15 @@ Result<Node<Value>*> BTree<Value>::remove_in_branch(Node<Value> *node, int index
   return Err(static_cast<Node<Value>*>(nullptr), "Cannot delete the node in branch!");
 }
 template<typename Value>
-void BTree<Value>::remove_in_leaf(Node<Value> *node, int index) {
-  if (index != -1){
-      node->erase_data(index);
-      node->erase_pointer(index);
-  }
-  switch (degree % 2) {
-    case 0:
-      if (node->get_data_count() >= degree / 2) {
-        return;
-      }
-    case 1:
-      if (node->get_data_count() >= degree / 2 + 1){
-        return;
-      }
+void BTree<Value>::solve(Node<Value> *node) {
+  if (node->get_data_count() >= min_data_count){
+    return;
   }
   auto parent = node->get_parent();
   auto target_node_index = parent->search_node(node).unwrap();
 
-  if (node->get_data_count() < ceil((double)degree / 2) - 1) {
-    switch (HowToSolveLack(parent, target_node_index)) {
+  if (node->get_data_count() < min_data_count) {
+    switch (how_to_solve(parent, target_node_index)) {
       case DeletionType::CounterClockwiseSpin:
         spin_counterclockwise(parent, target_node_index);
         break;
@@ -194,27 +182,19 @@ void BTree<Value>::remove_in_leaf(Node<Value> *node, int index) {
       default:assert("wrong type!");
     }
   }
+  if (parent != head && parent->get_data_count() < min_data_count){
+    solve(parent);
+  }
 }
 template<typename Value>
-DeletionType BTree<Value>::HowToSolveLack(Node<Value> *parent, int target_node_index) {
-  if (target_node_index == 0 && parent->get_pointer(target_node_index + 1)->get_data_count() >= min_pointer_count + 1) {
+DeletionType BTree<Value>::how_to_solve(Node<Value> *parent, int target_node_index) {
+  if (target_node_index != parent->get_pointer_count() - 1 && parent->get_pointer(target_node_index + 1)->get_data_count() >= min_data_count + 1) {
     return DeletionType::CounterClockwiseSpin;
-  } else if (target_node_index == parent->get_data_count() - 1
-      && parent->get_pointer(target_node_index - 1)->get_data_count() >= min_pointer_count + 1) {
+  } else if (target_node_index != 0 && parent->get_pointer(target_node_index - 1)->get_data_count() >= min_data_count + 1) {
     return DeletionType::ClockwiseSpin;
-  } else if (parent->get_pointer(target_node_index - 1)->get_data_count() >= min_pointer_count + 1) {
-    return DeletionType::ClockwiseSpin;
-  } else if (parent->get_pointer(target_node_index + 1)->get_data_count() >= min_pointer_count + 1) {
-    return DeletionType::CounterClockwiseSpin;
-  } else if (target_node_index == 0
-      && parent->get_pointer(target_node_index + 1)->get_data_count() <= min_pointer_count) {
-    return DeletionType::MergeRight;
-  } else if (target_node_index == parent->get_data_count() - 1
-      && parent->get_pointer(target_node_index - 1)->get_data_count() <= min_pointer_count) {
+  } else if (target_node_index != 0 && parent->get_pointer(target_node_index - 1)->get_data_count() <= min_data_count) {
     return DeletionType::MergeLeft;
-  } else if (parent->get_pointer(target_node_index - 1)->get_data_count() <= min_pointer_count) {
-    return DeletionType::MergeLeft;
-  } else if (parent->get_pointer(target_node_index + 1)->get_data_count() <= min_pointer_count) {
+  } else if (target_node_index != parent->get_pointer_count() - 1 && parent->get_pointer(target_node_index + 1)->get_data_count() <= min_data_count) {
     return DeletionType::MergeRight;
   }
 }
@@ -281,8 +261,8 @@ void BTree<Value>::merge_with_left(Node<Value> *parent, int target_node_index) {
     target->insert_data(0, data_to_merge[i]);
     target->set_pointer(0, pointer_to_merge[i]);
   }
-  parent->erase_data(target_node_index);
-  parent->erase_pointer(target_node_index);
+  parent->erase_data(target_node_index - 1);
+  parent->erase_pointer(target_node_index - 1);
 }
 template<typename Value>
 void print_node(Pointer<Value> node, size_t depth) {

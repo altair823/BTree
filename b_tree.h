@@ -45,14 +45,14 @@ class BTree{
 
  private:
   size_t degree; // Maximum number of pointers.
-  size_t min_pointer_count;
+  size_t min_data_count;
   Node<Value>* head;
   size_t depth;
 
   Result<SubRoot<Value>> split(Node<Value>* node);
   Result<Node<Value>*> remove_in_branch(Node<Value> *node, int index);
-  void remove_in_leaf(Node<Value> *node, int index = -1);
-  DeletionType HowToSolveLack(Node<Value> *parent, int target_node_index);
+  void solve(Node<Value> *node);
+  DeletionType how_to_solve(Node<Value> *parent, int target_node_index);
   void spin_clockwise(Node<Value> *parent, int target_node_index);
   void spin_counterclockwise(Node<Value> *parent, int target_node_index);
   void merge_with_right(Node<Value> *parent, int target_node_index);
