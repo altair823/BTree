@@ -10,13 +10,13 @@ Result<bool> BTree<Value>::insert(DataShared<Value> data) {
 
   // If head is null.
   if (head == nullptr){
-    head = new Node<Value>(degree);
+    head = Node<Value>::make_node();
     head->push_back(data, nullptr);
   }
 
   // Else, find the leaf node where the new data will insert.
   else{
-    Node<Value>* current_node = head;
+    Node<Value>* current_node = head.get();
     while (!current_node->is_leaf()){
       auto index = current_node->search(data->get_key()).unwrap();
       if (index < current_node->get_data_count() && current_node->get_data(index)->get_key() == data->get_key()) {
@@ -42,7 +42,7 @@ Result<bool> BTree<Value>::insert(DataShared<Value> data) {
         current_node->set_pointer(0, sub_root.l_child);
         current_node->set_pointer(1, sub_root.r_child);
         current_node->set_leaf(NO_LEAF);
-        if (current_node != head){
+        if (current_node != head.get()){
           auto parent = current_node->get_parent();
           auto p_index = parent->search(current_node->get_data(0)->get_key()).unwrap();
           parent->insert_data(p_index, current_node->get_data(0)).unwrap();
@@ -65,9 +65,9 @@ Result<SubRoot<Value>> BTree<Value>::split(Node<Value>* node) {
   bool is_leaf = node->is_leaf();
   int index = node->get_pointer_count() / 2 - 1;
   DataShared<Value> e = node->get_data(index);
-  Pointer<Value> l_child = Node<Value>::make_node(degree);
+  Pointer<Value> l_child = Node<Value>::make_node();
   l_child->set_leaf(is_leaf);
-  Pointer<Value> r_child = Node<Value>::make_node(degree);
+  Pointer<Value> r_child = Node<Value>::make_node();
   r_child->set_leaf(is_leaf);
 
   for (int i = 0; i < index; i++){
@@ -95,7 +95,7 @@ Result<bool> BTree<Value>::remove(Key key) {
     return Ok(false);
   }
   else{
-    Node<Value>* current_node = head;
+    Node<Value>* current_node = head.get();
     while (!current_node->is_leaf()){
       auto index = current_node->search(key).unwrap();
       if (index < current_node->get_data_count() && current_node->get_data(index)->get_key() == key) {
@@ -122,51 +122,43 @@ template<typename Value>
 Result<Node<Value>*> BTree<Value>::remove_in_branch(Node<Value> *node, int index) {
   auto current_node = node;
   while (!current_node->is_leaf()) {
-    {
+
+    if (current_node->get_pointer(index) != nullptr) {
       auto smaller_node = current_node->get_pointer(index).get();
-      auto biggest_index = smaller_node->get_data_count() - 1;
-      if (smaller_node != nullptr) {
-        auto to_up = smaller_node->get_data(biggest_index);
-        current_node->set_data(index, to_up);
-        smaller_node->set_data(biggest_index, nullptr);
-        if (!smaller_node->is_leaf()) {
-          return remove_in_branch(smaller_node, biggest_index);
-        } else{
-          smaller_node->erase_data(biggest_index);
-          smaller_node->erase_pointer(biggest_index + 1);
-          return Ok(smaller_node);
-        }
+      while (!smaller_node->is_leaf()) {
+        smaller_node = smaller_node->get_pointer(smaller_node->get_pointer_count() - 1).get();
       }
+      auto biggest_data = smaller_node->get_data(smaller_node->get_data_count() - 1);
+      current_node->set_data(index, biggest_data);
+      smaller_node->erase_data(smaller_node->get_data_count() - 1);
+      smaller_node->erase_pointer(smaller_node->get_pointer_count() - 1);
+      return Ok(smaller_node);
     }
-    {
+
+    if (current_node->get_pointer(index + 1) != nullptr) {
       auto bigger_node = current_node->get_pointer(index + 1).get();
-      auto smallest_index = 0;
-      if (bigger_node != nullptr) {
-        auto to_up = bigger_node->get_data(smallest_index);
-        current_node->set_data(index, to_up);
-        bigger_node->set_data(smallest_index, nullptr);
-        if (!bigger_node->is_leaf()) {
-          return remove_in_branch(bigger_node, smallest_index);
-        } else{
-          bigger_node->erase_data(smallest_index);
-          bigger_node->erase_pointer(smallest_index);
-          return Ok(bigger_node);
-        }
+      while (!bigger_node->is_leaf()) {
+        bigger_node = bigger_node->get_pointer(0).get();
       }
+      auto smallest_data = bigger_node->get_data(0);
+      current_node->set_data(index, smallest_data);
+      bigger_node->erase_data(0);
+      bigger_node->erase_pointer(0);
+      return Ok(bigger_node);
     }
   }
-  return Err(static_cast<Node<Value>*>(nullptr), "Cannot delete the node in branch!");
+    return Err(static_cast<Node<Value> *>(nullptr), "Cannot delete the node in branch!");
 }
 template<typename Value>
 void BTree<Value>::solve(Node<Value> *node) {
-  if (node->get_data_count() >= min_data_count){
+  if (node->get_data_count() >= min_data_count || (node == head.get() && node->is_leaf())){
     return;
   }
   auto parent = node->get_parent();
   auto target_node_index = parent->search_node(node).unwrap();
 
   if (node->get_data_count() < min_data_count) {
-    switch (how_to_solve(parent, target_node_index)) {
+    switch (BTree<Value>::how_to_solve(parent, target_node_index)) {
       case DeletionType::CounterClockwiseSpin:
         spin_counterclockwise(parent, target_node_index);
         break;
@@ -182,8 +174,14 @@ void BTree<Value>::solve(Node<Value> *node) {
       default:assert("wrong type!");
     }
   }
-  if (parent != head && parent->get_data_count() < min_data_count){
+  if (parent != head.get() && parent->get_data_count() < min_data_count){
     solve(parent);
+  }
+  else if (parent == head.get() && parent->get_data_count() == 0){
+    node->set_parent(nullptr);
+    auto new_head = Node<Value>::make_node();
+    new_head->from(node);
+    head = new_head;
   }
 }
 template<typename Value>
@@ -197,6 +195,7 @@ DeletionType BTree<Value>::how_to_solve(Node<Value> *parent, int target_node_ind
   } else if (target_node_index != parent->get_pointer_count() - 1 && parent->get_pointer(target_node_index + 1)->get_data_count() <= min_data_count) {
     return DeletionType::MergeRight;
   }
+  return DeletionType::None;
 }
 template<typename Value>
 void BTree<Value>::spin_clockwise(Node<Value> *parent, int target_node_index) {

@@ -25,13 +25,13 @@ using Pointer = std::shared_ptr<Node<Value>>;
 template <typename Value>
 class Node {
  public:
-  Node(size_t degree);
-  static Pointer<Value> make_node(size_t degree);
+  Node();
+  static Pointer<Value> make_node();
   int get_node_num(){return node_num;}
 
-  Pointer<Value> get_pointer(int index);
+  Pointer<Value> get_pointer (int index) const;
   DataShared<Value> get_data(int index);
-  int get_pointer_count(){return pointers.size();}
+  [[nodiscard]] int get_pointer_count() const {return pointers.size();}
   int get_data_count(){return data.size();}
   void set_data(int index, DataShared<Value> new_data);
   Result<bool> set_pointer(int index, Pointer<Value> pointer);
@@ -46,6 +46,7 @@ class Node {
   Result<int> search_node(Node<Value> *node);
   void set_leaf(bool leaf){is_node_leaf = leaf;}
   bool is_leaf(){return is_node_leaf;};
+  void from(const Node<Value>* node);
 
   friend std::ostream &operator<<(std::ostream &os, const Node &node) {
 
@@ -71,14 +72,14 @@ class Node {
     return os;
   }
 
+
+
  private:
 
   int node_num;
   Node<Value>* parent;
   std::vector<Pointer<Value>> pointers;
-  size_t max_pointer_count;
   std::vector<DataShared<Value>> data;
-  size_t max_data_count;
   bool is_node_leaf;
 };
 

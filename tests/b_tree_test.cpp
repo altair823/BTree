@@ -4,6 +4,7 @@
 
 #include <gtest/gtest.h>
 #include <random>
+#include <algorithm>
 #include "../b_tree.h"
 
 TEST(BTreeTest, InsertTest){
@@ -83,7 +84,7 @@ TEST(BTreeTest, RemoveTest){
     data.push_back(std::make_shared<Data<int>>(i, i));
   }
 
-  auto b_tree = BTree<int>(5);
+  auto b_tree = BTree<int>(6);
 
   for (auto& d: data){
     b_tree.insert(d).unwrap();
@@ -98,18 +99,42 @@ TEST(BTreeTest, RemoveTest){
   b_tree.remove(25);
   b_tree.remove(24);
   b_tree.remove(23);
-//  b_tree.remove(22);
-//  b_tree.remove(21);
-//  b_tree.remove(20);
-//  b_tree.remove(19);
-//  b_tree.remove(18);
-//  b_tree.remove(15);
-//  b_tree.remove(14);
-//  b_tree.remove(13);
-  //b_tree.remove(12);
-  //b_tree.remove(11);
-  //b_tree.remove(8);
-  //b_tree.remove(7);
+  b_tree.remove(22);
+  b_tree.remove(21);
+  b_tree.remove(20);
+  b_tree.remove(19);
+  b_tree.remove(18);
+  b_tree.remove(15);
+  b_tree.remove(14);
+  b_tree.remove(13);
+  b_tree.remove(12);
+  b_tree.remove(11);
+  b_tree.remove(8);
+  b_tree.remove(7);
+  b_tree.remove(6);
+  b_tree.remove(4);
+  b_tree.remove(3);
+  b_tree.remove(2);
 
+  b_tree.print();
+}
+
+TEST(BTreeTest, RandomRemoveTest){
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<int> dis(0, 999999);
+  std::vector<int> data;
+  auto b_tree = BTree<int>(20);
+  for (int i = 0; i < 100000; i++) {
+    int k = dis(gen);
+    data.push_back(k);
+    b_tree.insert(std::make_shared<Data<int>>(k, k));
+  }
+  b_tree.print();
+  auto rng = std::default_random_engine {};
+  std::shuffle(data.begin(), data.end(), rng);
+  for (auto& i: data){
+    b_tree.remove(i).unwrap();
+  }
   b_tree.print();
 }

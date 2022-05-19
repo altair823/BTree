@@ -6,9 +6,9 @@
 
 TEST(NodeTest, FieldTest){
 
-  auto node = Node<int>(20);
-  auto node2 = std::make_shared<Node<int>>(20);
-  auto node3 = std::make_shared<Node<int>>(20);
+  auto node = Node<int>();
+  auto node2 = std::make_shared<Node<int>>();
+  auto node3 = std::make_shared<Node<int>>();
   auto data1 = std::make_shared<Data<int>>(4, 4);
   node.push_back(data1, nullptr).unwrap();
   node.set_pointer(0, node2).unwrap();
@@ -16,9 +16,9 @@ TEST(NodeTest, FieldTest){
 }
 
 TEST(NodeTest, SearchTest){
-  auto node = Node<int>(20);
-  auto node2 = std::make_shared<Node<int>>(20);
-  auto node3 = std::make_shared<Node<int>>(20);
+  auto node = Node<int>();
+  auto node2 = std::make_shared<Node<int>>();
+  auto node3 = std::make_shared<Node<int>>();
   auto data1 = std::make_shared<Data<int>>(4, 4);
   node.push_back(data1, nullptr).unwrap();
   node.set_pointer(0, node2).unwrap();

@@ -2,15 +2,15 @@
 #include "node.h"
 
 template<typename Value>
-Node<Value>::Node(size_t degree)
-  : parent(nullptr), max_pointer_count(degree), max_data_count(degree - 1), is_node_leaf(LEAF) {
+Node<Value>::Node()
+  : parent(nullptr), is_node_leaf(LEAF) {
   node_num = node_count;
   node_count++;
   pointers.push_back(nullptr);
 }
 
 template<typename Value>
-Pointer<Value> Node<Value>::get_pointer(int index) {
+Pointer<Value> Node<Value>::get_pointer(int index) const {
   if (pointers.empty() || pointers.size() <= index || index < 0){
     return nullptr;
   }
@@ -34,13 +34,12 @@ Result<bool> Node<Value>::insert_data(int index, DataShared<Value> new_data) {\
 
 template<typename Value>
 Result<bool> Node<Value>::push_back(DataShared<Value> new_data, Pointer<Value> pointer) {
-  if (data.size() == max_data_count) {
-    return Err(false, "The data vector is full!");
-  } else {
-    data.push_back(new_data);
-    pointers.push_back(pointer);
-    return Ok(true);
+  data.push_back(new_data);
+  pointers.push_back(pointer);
+  if (pointer != nullptr){
+    pointer->set_parent(this);
   }
+  return Ok(true);
 }
 
 template<typename Value>
@@ -62,8 +61,8 @@ Result<bool> Node<Value>::set_pointer(int index, Pointer<Value> pointer) {
     return Ok(true);
 }
 template<typename Value>
-Pointer<Value> Node<Value>::make_node(size_t degree) {
-  return std::make_shared<Node<Value>>(degree);
+Pointer<Value> Node<Value>::make_node() {
+  return std::make_shared<Node<Value>>();
 }
 template<typename Value>
 void Node<Value>::clear() {
@@ -104,4 +103,17 @@ Result<int> Node<Value>::search_node(Node<Value> *node) {
     }
   }
   return Err(-1, "Cannot found the node #" + std::to_string(node->get_node_num()));
+}
+template<typename Value>
+void Node<Value>::from(const Node<Value> *node) {
+  //node_num = node->node_num;
+  parent = node->parent;
+  pointers.assign(node->pointers.begin(), node->pointers.end());
+  if (!node->is_node_leaf) {
+    for (int i = 0; i < node->get_pointer_count(); i++) {
+      node->get_pointer(i)->set_parent(this);
+    }
+  }
+  data.assign(node->data.begin(), node->data.end());
+  is_node_leaf = node->is_node_leaf;
 }

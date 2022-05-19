@@ -13,6 +13,7 @@ enum class DeletionType {
   CounterClockwiseSpin,
   MergeLeft,
   MergeRight,
+  None,
 };
 
 template <typename Value>
@@ -23,18 +24,12 @@ struct SubRoot{
 };
 
 template <typename Value>
-struct DeletedNode{
-  Node<Value>* node;
-  int null_index;
-};
-
-template <typename Value>
 void print_node(Pointer<Value> node, size_t depth);
 
 template <typename Value>
 class BTree{
  public:
-  BTree(size_t degree);
+  explicit BTree(size_t degree);
   Result<bool> insert(DataShared<Value> data);
   Result<bool> remove(Key key);
 
@@ -46,7 +41,7 @@ class BTree{
  private:
   size_t degree; // Maximum number of pointers.
   size_t min_data_count;
-  Node<Value>* head;
+  Pointer<Value> head;
   size_t depth;
 
   Result<SubRoot<Value>> split(Node<Value>* node);
