@@ -114,6 +114,9 @@ Result<bool> BTree<Value>::remove(Key key) {
       current_node->erase_pointer(index);
       solve(current_node);
     }
+    if (current_node == head.get() && current_node->get_data_count() == 0){
+      head.reset();
+    }
     // not found.
     return Ok(false);
   }
@@ -275,6 +278,14 @@ Result<Value> BTree<Value>::search(Key key) {
     }
   }while (current_node != nullptr);
   return Err(-1, "Cannot found the key.");
+}
+template<typename Value>
+bool BTree<Value>::is_empty() {
+  if (head == nullptr){
+    return true;
+  } else{
+    return false;
+  }
 }
 template<typename Value>
 void print_node(Pointer<Value> node, size_t depth) {

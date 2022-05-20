@@ -6,7 +6,7 @@
 #define B_TREE__B_TREE_H_
 
 #include <ostream>
-#include "node/node.h"
+#include "../node/node.h"
 
 enum class DeletionType {
   ClockwiseSpin,
@@ -33,7 +33,7 @@ class BTree{
   Result<bool> insert(DataShared<Value> data);
   Result<bool> remove(Key key);
   Result<Value> search(Key key);
-
+  bool is_empty();
 
   void print(){
     print_node(std::make_shared<Node<Value>>(*head), 1);

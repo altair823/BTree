@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 #include <random>
 #include <algorithm>
-#include "../b_tree.h"
+#include "../b_tree/b_tree.h"
 
 TEST(BTreeTest, InsertTest){
   auto b_tree = BTree<int>(5);
@@ -62,7 +62,7 @@ TEST(BTreeTest, InsertTest){
   b_tree.insert(data25).unwrap();
   b_tree.insert(data26).unwrap();
 
-  b_tree.print();
+  //b_tree.print();
 }
 
 TEST(BTreeTest, RandomInsertTest){
@@ -74,7 +74,7 @@ TEST(BTreeTest, RandomInsertTest){
     int k = dis(gen);
     b_tree.insert(std::make_shared<Data<int>>(k, k));
   }
-  b_tree.print();
+  //b_tree.print();
 }
 
 TEST(BTreeTest, RemoveTest){
@@ -116,7 +116,7 @@ TEST(BTreeTest, RemoveTest){
   b_tree.remove(3);
   b_tree.remove(2);
 
-  b_tree.print();
+  //b_tree.print();
 }
 
 TEST(BTreeTest, RandomRemoveTest){
@@ -130,13 +130,12 @@ TEST(BTreeTest, RandomRemoveTest){
     data.push_back(k);
     b_tree.insert(std::make_shared<Data<int>>(k, k));
   }
-  b_tree.print();
   auto rng = std::default_random_engine {};
   std::shuffle(data.begin(), data.end(), rng);
   for (auto& i: data){
     b_tree.remove(i).unwrap();
   }
-  b_tree.print();
+  ASSERT_EQ(b_tree.is_empty(), true);
 }
 
 TEST(BTreeTest, SearchTest){
@@ -150,6 +149,7 @@ TEST(BTreeTest, SearchTest){
   for (auto& d: data){
     btree.insert(std::make_shared<Data<int>>(d, d)).unwrap();
   }
-  std::cout<<btree.search(50000).unwrap()<<std::endl;
+  auto value = btree.search(5000).unwrap();
+  ASSERT_EQ(value, 5000);
   //btree.print();
 }

@@ -12,7 +12,7 @@ TEST(NodeTest, FieldTest){
   auto data1 = std::make_shared<Data<int>>(4, 4);
   node.push_back(data1, nullptr).unwrap();
   node.set_pointer(0, node2).unwrap();
-  std::cout << node;
+  //std::cout << node;
 }
 
 TEST(NodeTest, SearchTest){
@@ -23,5 +23,5 @@ TEST(NodeTest, SearchTest){
   node.push_back(data1, nullptr).unwrap();
   node.set_pointer(0, node2).unwrap();
   node.set_pointer(1, node3).unwrap();
-  std::cout << node;
+  //std::cout << node;
 }
