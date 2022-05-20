@@ -264,6 +264,19 @@ void BTree<Value>::merge_with_left(Node<Value> *parent, int target_node_index) {
   parent->erase_pointer(target_node_index - 1);
 }
 template<typename Value>
+Result<Value> BTree<Value>::search(Key key) {
+  auto current_node = head;
+  do {
+    auto index = current_node->search(key).unwrap();
+    if (index < current_node->get_data_count() && current_node->get_data(index)->get_key() == key){
+      return Ok(current_node->get_data(index)->get_value());
+    } else{
+      current_node = current_node->get_pointer(index);
+    }
+  }while (current_node != nullptr);
+  return Err(-1, "Cannot found the key.");
+}
+template<typename Value>
 void print_node(Pointer<Value> node, size_t depth) {
   if (node == nullptr){
     return;

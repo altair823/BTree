@@ -138,3 +138,18 @@ TEST(BTreeTest, RandomRemoveTest){
   }
   b_tree.print();
 }
+
+TEST(BTreeTest, SearchTest){
+  std::vector<int> data;
+  for (int i = 0; i < 10000; i++){
+    data.push_back(i);
+  }
+  auto rng = std::default_random_engine {};
+  std::shuffle(data.begin(), data.end(), rng);
+  BTree<int> btree(10);
+  for (auto& d: data){
+    btree.insert(std::make_shared<Data<int>>(d, d)).unwrap();
+  }
+  std::cout<<btree.search(50000).unwrap()<<std::endl;
+  //btree.print();
+}

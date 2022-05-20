@@ -32,6 +32,7 @@ class BTree{
   explicit BTree(size_t degree);
   Result<bool> insert(DataShared<Value> data);
   Result<bool> remove(Key key);
+  Result<Value> search(Key key);
 
 
   void print(){
