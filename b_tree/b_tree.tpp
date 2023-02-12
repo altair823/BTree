@@ -117,7 +117,7 @@ Result<bool> BTree<Value>::remove(Key key) {
     if (current_node == head.get() && current_node->get_data_count() == 0){
       head.reset();
     }
-    // not found.
+    // not found.ㅊ
     return Ok(false);
   }
 }
